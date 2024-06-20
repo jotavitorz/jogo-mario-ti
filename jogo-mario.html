@@ -137,6 +137,28 @@
         .option:hover {
             background-color: #00BFFF;
         }
+
+        .game-over {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(255, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .game-over button {
+            padding: 10px 20px;
+            background-color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
     </style>
 </head>
 <body>
@@ -155,6 +177,10 @@
                 <div class="question" id="question"></div>
                 <div class="options" id="options"></div>
             </div>
+        </div>
+        <div class="game-over" id="gameOver">
+            <p>Game Over! Você encostou no bloco.</p>
+            <button onclick="restartGame()">Reiniciar</button>
         </div>
     </div>
     <script>
@@ -177,7 +203,91 @@
                 options: ["6", "7", "8", "9"],
                 answer: "8"
             },
-            // Adicione mais perguntas conforme necessário
+            {
+                question: "Qual é o resultado de 15 - 7?",
+                options: ["7", "8", "9", "10"],
+                answer: "8"
+            },
+            {
+                question: "Qual é o resultado de 8 x 7?",
+                options: ["54", "56", "58", "60"],
+                answer: "56"
+            },
+            {
+                question: "Qual é o resultado de 81 / 9?",
+                options: ["7", "8", "9", "10"],
+                answer: "9"
+            },
+            {
+                question: "Qual é o quadrado de 5?",
+                options: ["20", "25", "30", "35"],
+                answer: "25"
+            },
+            {
+                question: "Qual é a raiz quadrada de 49?",
+                options: ["6", "7", "8", "9"],
+                answer: "7"
+            },
+            {
+                question: "Qual é o resultado de 10 + 15?",
+                options: ["20", "25", "30", "35"],
+                answer: "25"
+            },
+            {
+                question: "Qual é o resultado de 36 / 6?",
+                options: ["5", "6", "7", "8"],
+                answer: "6"
+            },
+            {
+                question: "Qual é o resultado de 13 + 6?",
+                options: ["18", "19", "20", "21"],
+                answer: "19"
+            },
+            {
+                question: "Qual é o resultado de 14 - 9?",
+                options: ["3", "4", "5", "6"],
+                answer: "5"
+            },
+            {
+                question: "Qual é o resultado de 7 x 8?",
+                options: ["54", "56", "58", "60"],
+                answer: "56"
+            },
+            {
+                question: "Qual é o cubo de 3?",
+                options: ["9", "18", "27", "36"],
+                answer: "27"
+            },
+            {
+                question: "Qual é a raiz quadrada de 81?",
+                options: ["7", "8", "9", "10"],
+                answer: "9"
+            },
+            {
+                question: "Qual é o resultado de 22 - 8?",
+                options: ["12", "13", "14", "15"],
+                answer: "14"
+            },
+            {
+                question: "Qual é o resultado de 11 + 11?",
+                options: ["20", "21", "22", "23"],
+                answer: "22"
+            },
+            {
+                question: "Qual é o valor de 3 x 9?",
+                options: ["26", "27", "28", "29"],
+                answer: "27"
+            },
+            {
+                question: "Qual é o resultado de 25 / 5?",
+                options: ["4", "5", "6", "7"],
+                answer: "5"
+            },
+            {
+                question: "Qual é o quadrado de 6?",
+                options: ["30", "32", "34", "36"],
+                answer: "36"
+            },
         ];
 
         document.addEventListener('keydown', function(event) {
@@ -199,7 +309,7 @@
         }
 
         function startGeneratingBlocks() {
-            blockInterval = setInterval(generateBlock, 4000); // Intervalo maior entre os blocos
+            blockInterval = setInterval(generateBlock, 8000); // Intervalo maior entre os blocos (8 segundos)
         }
 
         function generateBlock() {
@@ -236,8 +346,7 @@
                 currentQuestionIndex = (currentQuestionIndex + 1) % questions.length;
                 setTimeout(showQuestion, 500);
             } else {
-                alert("Resposta errada! Você perdeu!");
-                location.reload();
+                showGameOver();
             }
         }
 
@@ -265,12 +374,24 @@
                         playerRect.bottom > blockRect.top &&
                         playerRect.top < blockRect.bottom
                     ) {
-                        alert("Game Over! Você encostou no bloco.");
-                        location.reload();
+                        showGameOver();
                         clearInterval(checkInterval);
                     }
                 }
             }, 10);
+        }
+
+        function showGameOver() {
+            clearInterval(blockInterval);
+            document.getElementById("gameScreen").style.display = "none";
+            document.getElementById("gameOver").style.display = "block";
+        }
+
+        function restartGame() {
+            document.getElementById("gameOver").style.display = "none";
+            document.getElementById("startScreen").style.display = "flex";
+            currentQuestionIndex = 0;
+            document.querySelectorAll('.block').forEach(block => block.remove());
         }
     </script>
 </body>
