@@ -1,21 +1,408 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo do Mario</title>
     <style>
         body {
-        background-color: antiquewhite;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #87CEEB;
+            font-family: Arial, sans-serif;
+        }
+
+        .game-container {
+            position: relative;
+            width: 800px;
+            height: 400px;
+            border: 2px solid #000;
+            overflow: hidden;
+            background-image: url('./imagem/fundo.png');
+            background-size: cover;
+            background-position: center;
+        }
+
+        .logo {
+            display: block;
+            margin: 0 auto;
+            margin-bottom: 20px;
+            width: 300px;
+        }
+
+        .start-screen, .game-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+
+        .character-select {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .character {
+            width: 100px;
+            height: 100px;
+            background-size: cover;
+            cursor: pointer;
+        }
+
+        .mario { background-image: url('./imagem/mario.png'); }
+        .luigi { background-image: url('./imagem/luigi.png'); }
+        .peach { background-image: url('./imagem/peach.png'); }
+
+        .block {
+            position: absolute;
+            bottom: 0;
+            right: -50px;
+            width: 50px;
+            height: 50px;
+            background-color: green;
+            animation: moveBlock 2s infinite linear;
+        }
+
+        .jump {
+            animation: jump 0.6s ease;
+        }
+
+        @keyframes jump {
+            0% {
+                bottom: 0;
+            }
+            50% {
+                bottom: 150px;
+            }
+            100% {
+                bottom: 0;
+            }
+        }
+
+        @keyframes moveBlock {
+            from {
+                right: -50px;
+            }
+            to {
+                right: 800px;
+            }
+        }
+
+        .question-container {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-align: center;
+            max-width: 80%;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .question {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .options {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .option {
+            padding: 8px 15px;
+            background-color: #87CEEB;
+            border: 1px solid #000;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        .option:hover {
+            background-color: #00BFFF;
+        }
+
+        .game-over {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(255, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .game-over button {
+            padding: 10px 20px;
+            background-color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
         }
     </style>
-    <title>Jogo</title>
 </head>
 <body>
-    <h1>Jogo Versões do Mario</h1>
+    <div class="game-container">
+        <div class="start-screen" id="startScreen">
+            <img src="./imagem/logo.png" alt="Mario Logo" class="logo">
+            <div class="character-select">
+                <div class="character mario" onclick="startGame('mario')"></div>
+                <div class="character luigi" onclick="startGame('luigi')"></div>
+                <div class="character peach" onclick="startGame('peach')"></div>
+            </div>
+        </div>
+        <div class="game-screen" id="gameScreen" style="display: none;">
+            <div class="character" id="player" style="bottom: 0;"></div>
+            <div class="question-container" id="questionContainer">
+                <div class="question" id="question"></div>
+                <div class="options" id="options"></div>
+            </div>
+        </div>
+        <div class="game-over" id="gameOver">
+            <p>Game Over! Você encostou no bloco.</p>
+            <button onclick="restartGame()">Reiniciar</button>
+        </div>
+    </div>
+    <script>
+        let player, blockInterval;
+        let currentQuestionIndex = 0;
+        let isJumping = false;
+        let shuffledQuestions = [];
+        const questions = [
+            {
+                question: "Qual é o resultado de 7 + 5?",
+                options: ["10", "11", "12", "13"],
+                answer: "12"
+            },
+            {
+                question: "Qual é o valor de 9 x 6?",
+                options: ["54", "56", "52", "60"],
+                answer: "54"
+            },
+            {
+                question: "Qual é a raiz quadrada de 64?",
+                options: ["6", "7", "8", "9"],
+                answer: "8"
+            },
+            {
+                question: "Qual é o resultado de 15 - 7?",
+                options: ["7", "8", "9", "10"],
+                answer: "8"
+            },
+            {
+                question: "Qual é o resultado de 8 x 7?",
+                options: ["54", "56", "58", "60"],
+                answer: "56"
+            },
+            {
+                question: "Qual é o resultado de 81 / 9?",
+                options: ["7", "8", "9", "10"],
+                answer: "9"
+            },
+            {
+                question: "Qual é o quadrado de 5?",
+                options: ["20", "25", "30", "35"],
+                answer: "25"
+            },
+            {
+                question: "Qual é a raiz quadrada de 49?",
+                options: ["6", "7", "8", "9"],
+                answer: "7"
+            },
+            {
+                question: "Qual é o resultado de 10 + 15?",
+                options: ["20", "25", "30", "35"],
+                answer: "25"
+            },
+            {
+                question: "Qual é o resultado de 36 / 6?",
+                options: ["5", "6", "7", "8"],
+                answer: "6"
+            },
+            {
+                question: "Qual é o resultado de 13 + 6?",
+                options: ["18", "19", "20", "21"],
+                answer: "19"
+            },
+            {
+                question: "Qual é o resultado de 14 - 9?",
+                options: ["3", "4", "5", "6"],
+                answer: "5"
+            },
+            {
+                question: "Qual é o resultado de 7 x 8?",
+                options: ["54", "56", "58", "60"],
+                answer: "56"
+            },
+            {
+                question: "Qual é o cubo de 3?",
+                options: ["9", "18", "27", "36"],
+                answer: "27"
+            },
+            {
+                question: "Qual é a raiz quadrada de 81?",
+                options: ["7", "8", "9", "10"],
+                answer: "9"
+            },
+            {
+                question: "Qual é o resultado de 22 - 8?",
+                options: ["12", "13", "14", "15"],
+                answer: "14"
+            },
+            {
+                question: "Qual é o resultado de 11 + 11?",
+                options: ["20", "21", "22", "23"],
+                answer: "22"
+            },
+            {
+                question: "Qual é o valor de 3 x 9?",
+                options: ["26", "27", "28", "29"],
+                answer: "27"
+            },
+            {
+                question: "Qual é o resultado de 25 / 5?",
+                options: ["4", "5", "6", "7"],
+                answer: "5"
+            },
+            {
+                question: "Qual é o quadrado de 6?",
+                options: ["30", "32", "34", "36"],
+                answer: "36"
+            },
+        ];
 
-    <a href="jogobase.html">Jogo do Mario versão base</a> <br>
-    <a href="jogov2.html">Jogo do Mario versão 2</a> <br>
-    <a href="jogov3.html">Jogo do Mario versão 3</a> <br>
-    <a href="jogo-mario.html">Jogo do Mario final</a>
+        document.addEventListener('keydown', function(event) {
+            if (event.code === 'Space') {
+                jump();
+            }
+        });
+
+        function startGame(character) {
+            shuffleQuestions();
+            document.getElementById("startScreen").style.display = "none";
+            player = document.getElementById("player");
+            player.className = 'character ' + character;
+            player.style.display = 'block';
+            player.style.position = 'absolute';
+            player.style.bottom = '0';
+            document.getElementById("gameScreen").style.display = "flex";
+            startGeneratingBlocks();
+            showQuestion();
+        }
+
+        function shuffleQuestions() {
+            shuffledQuestions = [...questions];
+            for (let i = shuffledQuestions.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffledQuestions[i], shuffledQuestions[j]] = [shuffledQuestions[j], shuffledQuestions[i]];
+            }
+        }
+
+        function startGeneratingBlocks() {
+            blockInterval = setInterval(generateBlock, 8000); // Intervalo maior entre os blocos (8 segundos)
+        }
+
+        function generateBlock() {
+            const block = document.createElement('div');
+            block.className = 'block';
+            document.querySelector('.game-container').appendChild(block);
+
+            // Remove o bloco após ele sair da tela
+            block.addEventListener('animationend', () => {
+                block.remove();
+            });
+
+            isAliveCheck(block);
+        }
+
+        function showQuestion() {
+            const questionData = shuffledQuestions[currentQuestionIndex];
+            document.getElementById("question").innerText = questionData.question;
+            const optionsContainer = document.getElementById("options");
+            optionsContainer.innerHTML = '';
+            questionData.options.forEach(option => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'option';
+                optionElement.innerText = option;
+                optionElement.onclick = () => checkAnswer(option);
+                optionsContainer.appendChild(optionElement);
+            });
+        }
+
+        function checkAnswer(selectedOption) {
+            const questionData = shuffledQuestions[currentQuestionIndex];
+            if (selectedOption === questionData.answer) {
+                jump();
+                currentQuestionIndex = (currentQuestionIndex + 1) % shuffledQuestions.length;
+                setTimeout(showQuestion, 500);
+            } else {
+                showGameOver();
+            }
+        }
+
+        function jump() {
+            if (!player.classList.contains("jump")) {
+                isJumping = true;
+                player.classList.add("jump");
+                setTimeout(function() {
+                    player.classList.remove("jump");
+                    isJumping = false;
+                }, 500);
+            }
+        }
+
+        function isAliveCheck(block) {
+            const checkInterval = setInterval(function() {
+                if (!isJumping) {
+                    let playerRect = player.getBoundingClientRect();
+                    let blockRect = block.getBoundingClientRect();
+
+                    // Verifica colisão mais precisa entre o personagem e o bloco
+                    if (
+                        playerRect.right > blockRect.left &&
+                        playerRect.left < blockRect.right &&
+                        playerRect.bottom > blockRect.top &&
+                        playerRect.top < blockRect.bottom
+                    ) {
+                        showGameOver();
+                        clearInterval(checkInterval);
+                    }
+                }
+            }, 10);
+        }
+
+        function showGameOver() {
+            clearInterval(blockInterval);
+            document.getElementById("gameScreen").style.display = "none";
+            document.getElementById("gameOver").style.display = "block";
+        }
+
+        function restartGame() {
+            document.getElementById("gameOver").style.display = "none";
+            document.getElementById("startScreen").style.display = "flex";
+            currentQuestionIndex = 0;
+            document.querySelectorAll('.block').forEach(block => block.remove());
+        }
+    </script>
 </body>
 </html>
